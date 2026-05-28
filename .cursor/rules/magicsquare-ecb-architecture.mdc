@@ -1,0 +1,86 @@
+---
+description: ECB 아키텍처 레이어 규칙 — Entity/Control/Boundary 역할 분리, 의존 방향, 디렉토리 구조
+globs: src/**/*.py
+alwaysApply: false
+---
+
+# ECB 아키텍처 규칙
+
+## 레이어 정의
+
+| 레이어 | 디렉토리 | 역할 |
+| -------- | ---------- | ------ |
+| Entity | `src/magic_square/entity/` | 순수 데이터 구조, 도메인 타입 — 로직 없음 |
+| Control | `src/magic_square/control/` | 비즈니스 로직, 불변 조건 검증 흐름 |
+| Boundary | `src/magic_square/boundary/` | 외부 입력 수신 및 내부 포맷 변환 |
+
+## 의존 방향 (역방향 금지)
+
+```text
+Boundary → Control → Entity
+
+❌ Entity가 Control을 import
+❌ Control이 Boundary를 import
+```
+
+## 이 프로젝트에서의 레이어 매핑
+
+```python
+# Entity — 도메인 타입 정의만, 로직 없음
+# src/magic_square/entity/types.py
+Grid = list[list[int]]
+
+@dataclass(frozen=True)
+class ValidationResult:
+    is_valid: bool
+    failed: list[str]
+
+# Control — 검증 흐름 조율
+# src/magic_square/control/validator.py
+def validate(grid: Grid) -> ValidationResult: ...
+def _check_grid_size(grid: Grid) -> str | None: ...
+def _check_number_set(grid: Grid) -> str | None: ...
+def _check_no_duplicate(grid: Grid) -> str | None: ...
+def _check_row_sums(grid: Grid) -> str | None: ...
+def _check_col_sums(grid: Grid) -> str | None: ...
+def _check_diag_sums(grid: Grid) -> str | None: ...
+def _check_completeness(grid: Grid) -> str | None: ...
+
+# Boundary — 외부 입력 변환만, 판정 로직 없음
+# src/magic_square/boundary/parser.py
+def parse_flat_list(flat: list[int]) -> Grid: ...
+def parse_csv_string(csv: str) -> Grid: ...
+```
+
+## 레이어별 금지 사항
+
+- **Entity**: 조건 분기 로직 금지, 다른 레이어 import 금지
+- **Control**: 입출력 포맷 파싱 금지, I/O 작업 금지
+- **Boundary**: 유효성 판정 로직 금지 (파싱 실패 외)
+
+## 디렉토리 구조
+
+```text
+MagicSquare_021/
+├── src/
+│   └── magic_square/
+│       ├── __init__.py
+│       ├── boundary/
+│       │   ├── __init__.py
+│       │   └── parser.py          # 외부 입력 → Grid 변환
+│       ├── control/
+│       │   ├── __init__.py
+│       │   └── validator.py       # 불변 조건 검증 흐름
+│       └── entity/
+│           ├── __init__.py
+│           └── types.py           # Grid, ValidationResult 타입 정의
+├── tests/
+│   ├── conftest.py                # 공유 fixture
+│   ├── boundary/
+│   │   └── test_parser.py
+│   ├── control/
+│   │   └── test_validator.py
+│   └── entity/
+│       └── test_types.py
+└── pyproject.toml                 # Black, pytest, coverage 설정
+```
