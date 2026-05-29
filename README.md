@@ -87,69 +87,139 @@ MagicSquare_021/
 
 ---
 
-## RED 단계 To-Do 리스트
+## TDD 진행 체크리스트
 
-> 이 체크리스트는 [Test Plan](Docs/TestPlan_MagicSquare_v0.1.md) 기반으로 생성되었습니다.
-> 각 항목은 RED(실패 테스트 작성) 완료 시 체크합니다.
+> [Test Plan](Docs/TestPlan_MagicSquare_v0.1.md) · [defect_list.md](defect_list.md) (DL-MSQ-001) 기준.  
+> **RED** = 테스트 작성·커밋 (`red` 브랜치) · **GREEN** = 최소 구현·커밋 (`green` 브랜치, G-번호 순).  
+> GREEN은 Entity → Boundary(크기) → Boundary(S-01) → Control(INV) → Phase 2 → 회귀 순서를 따른다.
 
-### Track A — UI / Boundary 테스트
+### RED 커밋 묶음 (테스트 작성)
 
-`tests/boundary/test_input_validator.py` · S-01 · `InputValidator.validate_input`
+묶음 단위로 `red`에 커밋하고, 하위 TC가 모두 체크되면 묶음도 체크한다.
 
-- [x] TC-A-01: 빈칸 0개 격자 → `is_valid=False`, `"blank_count"` 오류 (SC-BND-VAL-001)
-- [x] TC-A-02: 빈칸 1개 격자 → `is_valid=False`, `"blank_count"` 오류 (AC-01-2)
-- [x] TC-A-03: 빈칸 3개 격자 → `is_valid=False`, `"blank_count"` 오류 (AC-01-3)
-- [x] TC-A-04: 빈칸 4개 격자 → `is_valid=False`, `"blank_count"` 오류 (AC-01-4)
-- [x] TC-A-05: 중복 숫자 포함 격자 → `is_valid=False`, `"duplicate"` 오류 (SC-BND-VAL-002)
-- [x] TC-A-06: 17 이상 값 포함 → `is_valid=False`, `"out_of_range"` 오류 (SC-BND-VAL-003)
-- [x] TC-A-07: 0 이하 값 포함(빈칸 제외) → `is_valid=False`, `"out_of_range"` 오류 (AC-01-7)
-- [x] TC-A-08: 4×4가 아닌 격자 → `is_valid=False`, `"grid_size"` 오류 (SC-BND-VAL-004)
+- [x] **RED-1** `tests/entity/test_types.py` (16건) → `entity/types.py`
+  - [x] G-001 `TestDomainConstants::test_grid_size_is_4`
+  - [x] G-002 `…::test_target_sum_is_34`
+  - [x] G-003 `…::test_required_numbers_contains_1_to_16`
+  - [x] G-004 `…::test_required_numbers_count_is_16`
+  - [x] G-005 `TestConditionResult::test_passed_condition_reason_defaults_to_none`
+  - [x] G-006 `…::test_passed_condition_stores_name_and_passed`
+  - [x] G-007 `…::test_failed_condition_stores_reason`
+  - [x] G-008 `…::test_condition_result_is_immutable`
+  - [x] G-009 `…::test_condition_result_name_is_immutable`
+  - [x] G-010 `TestValidationResult::test_valid_result_is_valid_is_true`
+  - [x] G-011 `…::test_valid_result_failed_conditions_defaults_to_empty`
+  - [x] G-012 `…::test_invalid_result_stores_failed_conditions`
+  - [x] G-013 `…::test_invalid_result_with_multiple_failures`
+  - [x] G-014 `…::test_validation_result_is_immutable`
+  - [x] G-015 `…::test_single_failure_makes_result_invalid`
+  - [x] G-016 `TestGridTypeAlias::test_grid_accepts_4x4_list`
 
-### Track B — Domain / Logic 테스트
+- [x] **RED-2** `tests/boundary/test_ac_fr_01_01_invalid_size.py` (8건) → `magic_square.boundary` · AC-FR-01-01
+  - [x] G-017 `test_three_rows_grid_returns_invalid_size_error_code`
+  - [x] G-018 `test_five_columns_grid_returns_invalid_size_error_code`
+  - [x] G-019 `test_five_rows_grid_returns_invalid_size_error_code`
+  - [x] G-020 `test_empty_grid_returns_invalid_size_error_code`
+  - [x] G-021 `test_jagged_row_lengths_returns_invalid_size_error_code`
+  - [x] G-022 `test_valid_4x4_grid_does_not_emit_invalid_size`
+  - [x] G-023 `test_invalid_size_skips_blank_count_check`
+  - [x] G-024 `test_pydantic_schema_rejects_non_4x4_flat_input`
 
-#### B-1. MVP Validator · `tests/control/test_validator.py` · US-04 · INV-1~7
+- [ ] **RED-2b** `tests/boundary/test_ac_fr_01_01_input_validation.py` (예정) → `src/boundary/` · Dual-Track envelope
+  - [ ] G-024a `TestNormalFailureReturn::test_none_grid_returns_failure_with_invalid_size_code`
+  - [ ] G-024b~ AC-FR-01-02~05 (U-IN/U-OUT/U-FLOW, RED 미작성)
 
-- [x] TC-B-01: 3행 격자 → `_check_grid_size` 실패, `name="격자 크기"` (INV-1)
-- [x] TC-B-02: 숫자 7 누락·17 포함 → `_check_number_set` 실패 (INV-2)
-- [x] TC-B-03: 숫자 5 중복 → `_check_no_duplicate` 실패, `reason="중복 숫자 존재: [5]"` (INV-3)
-- [x] TC-B-04: 1행 합 33 → `_check_row_sums` 실패 (INV-4)
-- [x] TC-B-05: 3열 합 35 → `_check_col_sums` 실패 (INV-5)
-- [x] TC-B-06: 반대각선 합 35 → `_check_diag_sums` 실패 (INV-6)
-- [x] TC-B-07: 유효 마방진 → `validate()` `is_valid=True`, `failed_conditions=[]` (INV-7)
-- [x] TC-B-08: 행 합 위반 격자 → `validate()` `is_valid=False` (FR-V-08)
-- [x] TC-B-09: 실패 조건 → 모든 `failed_conditions`에 `reason` 포함 (FR-V-10)
+- [x] **RED-3** `tests/boundary/test_input_validator.py` (8건) → S-01 · `validate_input`
+  - [x] G-025 TC-A-01 `test_validate_input_rejects_zero_blanks` (AC-01-1)
+  - [x] G-026 TC-A-02 `test_validate_input_rejects_one_blank` (AC-01-2)
+  - [x] G-027 TC-A-03 `test_validate_input_rejects_three_blanks` (AC-01-3)
+  - [x] G-028 TC-A-04 `test_validate_input_rejects_four_blanks` (AC-01-4)
+  - [x] G-029 TC-A-05 `test_validate_input_rejects_duplicate_numbers` (AC-01-5)
+  - [x] G-030 TC-A-06 `test_validate_input_rejects_value_above_max` (AC-01-6)
+  - [x] G-031 TC-A-07 `test_validate_input_rejects_value_below_min` (AC-01-7)
+  - [x] G-032 TC-A-08 `test_validate_input_rejects_non_4x4_grid` (SC-BND-VAL-004)
 
-#### B-2. BlankFinder · `tests/control/test_blank_finder.py` · S-02
+- [x] **RED-4** `tests/control/test_validator.py` (9건) → MVP · INV-1~7
+  - [x] G-033 TC-B-01 `test_check_grid_size_rejects_grid_with_three_rows` (INV-1)
+  - [x] G-034 TC-B-02 `test_check_number_set_rejects_missing_number` (INV-2)
+  - [x] G-035 TC-B-03 `test_check_no_duplicate_rejects_duplicate_number` (INV-3)
+  - [x] G-036 TC-B-04 `test_check_row_sums_fails_when_first_row_not_34` (INV-4)
+  - [x] G-037 TC-B-05 `test_check_col_sums_fails_when_third_col_not_34` (INV-5)
+  - [x] G-038 TC-B-06 `test_check_diag_sums_fails_when_anti_diagonal_not_34` (INV-6)
+  - [x] G-039 TC-B-07 `test_validate_accepts_valid_magic_square` (INV-7)
+  - [x] G-040 TC-B-08 `test_validate_fails_when_row_sum_invalid` (FR-V-08)
+  - [x] G-041 TC-B-09 `test_validate_includes_reason_when_condition_fails` (FR-V-10)
 
-- [x] TC-B-10: 빈칸 2개 → 좌표 2개 `[(2,2), (3,2)]` 반환 (AC-02-1)
-- [x] TC-B-11: 반환값 → `(row, col)` tuple 목록 (AC-02-2, AC-02-3)
-- [x] TC-B-12: 빈칸 없음 → 빈 리스트 반환 (AC-02-4)
-- [x] TC-B-13: 빈칸 3개 → 모든 빈칸 좌표 반환 (AC-02-5)
+- [x] **RED-5** `tests/control/test_blank_finder.py` (4건) → S-02
+  - [x] G-042 TC-B-10 `test_find_blanks_returns_two_coordinates`
+  - [x] G-043 TC-B-11 `test_find_blanks_returns_row_col_tuples`
+  - [x] G-044 TC-B-12 `test_find_blanks_returns_empty_list_when_no_blanks`
+  - [x] G-045 TC-B-13 `test_find_blanks_returns_all_positions_when_more_than_two`
 
-#### B-3. MissingNumberFinder · `tests/control/test_missing_number_finder.py` · S-03
+- [x] **RED-6** `tests/control/test_missing_number_finder.py` (4건) → S-03
+  - [x] G-046 TC-B-14 `test_find_missing_returns_two_numbers`
+  - [x] G-047 TC-B-15 `test_find_missing_returns_sorted_list`
+  - [x] G-048 TC-B-16 `test_find_missing_returns_empty_when_complete`
+  - [x] G-049 TC-B-17 `test_find_missing_returns_correct_numbers_with_duplicate_in_grid`
 
-- [x] TC-B-14: 빈칸 2개 → 누락 숫자 `{7, 14}` 반환 (AC-03-1)
-- [x] TC-B-15: 반환값 → 오름차순 `list[int]` (AC-03-2, AC-03-3)
-- [x] TC-B-16: 완성 격자 → 빈 리스트 반환 (AC-03-4)
-- [x] TC-B-17: 중복 포함 격자 → 누락 숫자 정확히 반환 (AC-03-5)
+- [x] **RED-7** `tests/control/test_solver.py` (5건) → S-05
+  - [x] G-050 TC-B-18 `test_solve_returns_small_first_when_small_first_succeeds`
+  - [x] G-051 TC-B-19 `test_solve_returns_large_first_when_small_first_fails`
+  - [x] G-052 TC-B-20 `test_solve_returns_none_when_both_combinations_fail`
+  - [x] G-053 TC-B-21 `test_solve_returns_4x4_grid_without_blanks`
+  - [x] G-054 TC-B-22 `test_solve_result_passes_validate`
 
-#### B-4. Solver · `tests/control/test_solver.py` · S-05
+- [x] **RED-8** `tests/regression/test_us11_regression_protection.py` (1건) → US-11
+  - [x] G-055 TC-B-26 `test_us11_all_prd_usecase_test_files_exist`
 
-- [x] TC-B-18: small-first 성공 → 완성 격자 반환, 빈칸(0) 없음 (SC-DOM-SOL-002)
-- [x] TC-B-19: small-first 실패 → large-first `(14, 7)` 배치 성공 (SC-DOM-SOL-001)
-- [x] TC-B-20: 두 조합 모두 실패 → `None` 반환 (SC-DOM-SOL-003)
-- [x] TC-B-21: 반환 격자 → 4×4, 빈칸 없음 (AC-05-5, AC-05-6)
-- [x] TC-B-22: 반환 격자 → `validate()` 통과 (AC-05-8)
+### GREEN 처리 순서 (구현, G-번호 오름차순)
 
-#### B-5. Entity (선행) · `tests/entity/test_types.py`
+`green` 브랜치에서 **한 번에 G-번호 1건**(또는 동일 AC 묶음)만 구현한다. 통과 시 체크.
 
-- [x] TC-B-23: 도메인 상수 — `GRID_SIZE`, `TARGET_SUM`, `REQUIRED_NUMBERS` (GREEN)
-- [x] TC-B-24: `ConditionResult` — frozen, name, passed, reason (GREEN)
-- [x] TC-B-25: `ValidationResult` — is_valid, failed_conditions, 불가분성 (GREEN)
+#### 0단계 — Entity (`entity/types.py`)
 
-#### B-6. 회귀 보호 · `tests/regression/test_us11_regression_protection.py` · US-11
+- [ ] G-001 ~ G-004 도메인 상수 (`GRID_SIZE`, `TARGET_SUM`, `REQUIRED_NUMBERS`)
+- [ ] G-005 ~ G-015 `ConditionResult` / `ValidationResult` (`frozen=True`)
+- [ ] G-016 `Grid` 타입 별칭
 
-- [x] TC-B-26: PRD Use Case 테스트 파일 5개 존재 확인
+#### 1단계 — Boundary 크기 (`magic_square.boundary` · AC-FR-01-01)
+
+- [ ] G-017 ~ G-021 비정형 격자 → `INVALID_SIZE`, `is_valid=False`
+- [ ] G-022 정상 4×4 → `INVALID_SIZE` 미포함
+- [ ] G-023 크기 위반 시 `_check_blank_count` 미호출
+- [ ] G-024 `GridInputSchema` 16칸 Pydantic 검증
+
+#### 1b단계 — Dual-Track Boundary (`src/boundary/` · 예정)
+
+- [ ] G-024a `grid=None` → `FailureResponse` (`type=ERROR`, `code=INVALID_SIZE`, `message="Grid must be 4x4."`)
+- [ ] G-024b~ AC-FR-01-02~05
+
+#### 2단계 — Boundary S-01 (`validate_input` · RED-3 이후)
+
+- [ ] G-025 ~ G-028 빈칸 수 → `blank_count` (AC-01-1~4)
+- [ ] G-029 중복 → `duplicate` (AC-01-5)
+- [ ] G-030 ~ G-031 범위 → `out_of_range` (AC-01-6~7)
+- [ ] G-032 비 4×4 → `grid_size` / `INVALID_SIZE` (SC-BND-VAL-004)
+
+#### 3단계 — Control MVP Validator (INV-1 → INV-7)
+
+- [ ] G-033 INV-1 `_check_grid_size`
+- [ ] G-034 INV-2 `_check_number_set`
+- [ ] G-035 INV-3 `_check_no_duplicate`
+- [ ] G-036 INV-4 `_check_row_sums`
+- [ ] G-037 INV-5 `_check_col_sums`
+- [ ] G-038 INV-6 `_check_diag_sums`
+- [ ] G-039 ~ G-041 `validate()` 통합 · reason · 불가분성
+
+#### 4단계 — Control Phase 2
+
+- [ ] G-042 ~ G-045 BlankFinder (S-02)
+- [ ] G-046 ~ G-049 MissingNumberFinder (S-03)
+- [ ] G-050 ~ G-054 Solver (S-05)
+
+#### 5단계 — 회귀
+
+- [ ] G-055 US-11 회귀 보호 (G-001~054 완료 후 자동 해소 예상)
 
 ### 커버리지 목표
 
@@ -160,7 +230,7 @@ MagicSquare_021/
 ### 결함 목록 연결
 
 - [x] [`defect_list.md`](defect_list.md) 생성 및 발견 결함 기록 (DL-MSQ-001, 23건)
-- [ ] 모든 결함 수정 후 회귀 테스트 통과 확인
+- [ ] 모든 결함 수정 후 회귀 테스트 통과 확인 (G-055)
 
 ---
 
