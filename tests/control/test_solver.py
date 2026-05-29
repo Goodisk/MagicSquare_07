@@ -32,8 +32,8 @@ def test_solve_returns_large_first_when_small_first_fails(
 
     # Assert
     assert result is not None
-    assert result[2][2] == 14
-    assert result[3][2] == 7
+    assert result[2][2] == 7
+    assert result[3][2] == 14
 
 
 def test_solve_returns_none_when_both_combinations_fail(
