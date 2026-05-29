@@ -87,6 +87,85 @@ MagicSquare_021/
 
 ---
 
+## RED 단계 To-Do 리스트
+
+> 이 체크리스트는 [Test Plan](Docs/TestPlan_MagicSquare_v0.1.md) 기반으로 생성되었습니다.
+> 각 항목은 RED(실패 테스트 작성) 완료 시 체크합니다.
+
+### Track A — UI / Boundary 테스트
+
+`tests/boundary/test_input_validator.py` · S-01 · `InputValidator.validate_input`
+
+- [x] TC-A-01: 빈칸 0개 격자 → `is_valid=False`, `"blank_count"` 오류 (SC-BND-VAL-001)
+- [x] TC-A-02: 빈칸 1개 격자 → `is_valid=False`, `"blank_count"` 오류 (AC-01-2)
+- [x] TC-A-03: 빈칸 3개 격자 → `is_valid=False`, `"blank_count"` 오류 (AC-01-3)
+- [x] TC-A-04: 빈칸 4개 격자 → `is_valid=False`, `"blank_count"` 오류 (AC-01-4)
+- [x] TC-A-05: 중복 숫자 포함 격자 → `is_valid=False`, `"duplicate"` 오류 (SC-BND-VAL-002)
+- [x] TC-A-06: 17 이상 값 포함 → `is_valid=False`, `"out_of_range"` 오류 (SC-BND-VAL-003)
+- [x] TC-A-07: 0 이하 값 포함(빈칸 제외) → `is_valid=False`, `"out_of_range"` 오류 (AC-01-7)
+- [x] TC-A-08: 4×4가 아닌 격자 → `is_valid=False`, `"grid_size"` 오류 (SC-BND-VAL-004)
+
+### Track B — Domain / Logic 테스트
+
+#### B-1. MVP Validator · `tests/control/test_validator.py` · US-04 · INV-1~7
+
+- [x] TC-B-01: 3행 격자 → `_check_grid_size` 실패, `name="격자 크기"` (INV-1)
+- [x] TC-B-02: 숫자 7 누락·17 포함 → `_check_number_set` 실패 (INV-2)
+- [x] TC-B-03: 숫자 5 중복 → `_check_no_duplicate` 실패, `reason="중복 숫자 존재: [5]"` (INV-3)
+- [x] TC-B-04: 1행 합 33 → `_check_row_sums` 실패 (INV-4)
+- [x] TC-B-05: 3열 합 35 → `_check_col_sums` 실패 (INV-5)
+- [x] TC-B-06: 반대각선 합 35 → `_check_diag_sums` 실패 (INV-6)
+- [x] TC-B-07: 유효 마방진 → `validate()` `is_valid=True`, `failed_conditions=[]` (INV-7)
+- [x] TC-B-08: 행 합 위반 격자 → `validate()` `is_valid=False` (FR-V-08)
+- [x] TC-B-09: 실패 조건 → 모든 `failed_conditions`에 `reason` 포함 (FR-V-10)
+
+#### B-2. BlankFinder · `tests/control/test_blank_finder.py` · S-02
+
+- [x] TC-B-10: 빈칸 2개 → 좌표 2개 `[(2,2), (3,2)]` 반환 (AC-02-1)
+- [x] TC-B-11: 반환값 → `(row, col)` tuple 목록 (AC-02-2, AC-02-3)
+- [x] TC-B-12: 빈칸 없음 → 빈 리스트 반환 (AC-02-4)
+- [x] TC-B-13: 빈칸 3개 → 모든 빈칸 좌표 반환 (AC-02-5)
+
+#### B-3. MissingNumberFinder · `tests/control/test_missing_number_finder.py` · S-03
+
+- [x] TC-B-14: 빈칸 2개 → 누락 숫자 `{7, 14}` 반환 (AC-03-1)
+- [x] TC-B-15: 반환값 → 오름차순 `list[int]` (AC-03-2, AC-03-3)
+- [x] TC-B-16: 완성 격자 → 빈 리스트 반환 (AC-03-4)
+- [x] TC-B-17: 중복 포함 격자 → 누락 숫자 정확히 반환 (AC-03-5)
+
+#### B-4. Solver · `tests/control/test_solver.py` · S-05
+
+- [x] TC-B-18: small-first 성공 → 완성 격자 반환, 빈칸(0) 없음 (SC-DOM-SOL-002)
+- [x] TC-B-19: small-first 실패 → large-first `(14, 7)` 배치 성공 (SC-DOM-SOL-001)
+- [x] TC-B-20: 두 조합 모두 실패 → `None` 반환 (SC-DOM-SOL-003)
+- [x] TC-B-21: 반환 격자 → 4×4, 빈칸 없음 (AC-05-5, AC-05-6)
+- [x] TC-B-22: 반환 격자 → `validate()` 통과 (AC-05-8)
+
+#### B-5. Entity (선행) · `tests/entity/test_types.py`
+
+- [x] TC-B-23: 도메인 상수 — `GRID_SIZE`, `TARGET_SUM`, `REQUIRED_NUMBERS` (GREEN)
+- [x] TC-B-24: `ConditionResult` — frozen, name, passed, reason (GREEN)
+- [x] TC-B-25: `ValidationResult` — is_valid, failed_conditions, 불가분성 (GREEN)
+
+#### B-6. 회귀 보호 · `tests/regression/test_us11_regression_protection.py` · US-11
+
+- [x] TC-B-26: PRD Use Case 테스트 파일 5개 존재 확인
+
+### 커버리지 목표
+
+- [ ] Domain Logic: 95%+ (`pip install pytest-cov`)
+- [ ] Boundary Layer: 85%+
+- [ ] 전체 TOTAL: 90%+
+
+### 결함 목록 연결
+
+- [x] [`defect_list.md`](defect_list.md) 생성 및 발견 결함 기록 (DL-MSQ-001, 23건)
+- [ ] 모든 결함 수정 후 회귀 테스트 통과 확인
+
+---
+
 ## 참고 문서
 
 - [문제 정의 보고서](Report/01.problem-definition.md)
+- [PRD v0.1](Docs/PRD_MagicSquare_v0.1.md)
+- [Test Plan v0.1](Docs/TestPlan_MagicSquare_v0.1.md)
