@@ -2,7 +2,12 @@
 
 from __future__ import annotations
 
-from magic_square.entity.types import Grid, InputValidationResult
+from magic_square.entity.types import (
+    GRID_SIZE,
+    Grid,
+    InputValidationResult,
+    ValidationErrorCode,
+)
 
 
 def _check_blank_count(grid: Grid) -> None:
@@ -11,10 +16,19 @@ def _check_blank_count(grid: Grid) -> None:
 
 
 def validate_input(grid: Grid) -> InputValidationResult:
-    """RED 스텁: 항상 통과·오류 없음을 반환하여 검증 실패 테스트가 통과하지 않게 한다."""
-    from magic_square.entity.types import ValidationErrorCode
+    """입력 검증 — GREEN: 비 4×4 격자 시 INVALID_SIZE (G-017~G-022)."""
+    if len(grid) != GRID_SIZE:
+        return InputValidationResult(
+            is_valid=False,
+            error_codes=[ValidationErrorCode.INVALID_SIZE],
+        )
+    if any(len(row) != GRID_SIZE for row in grid):
+        return InputValidationResult(
+            is_valid=False,
+            error_codes=[ValidationErrorCode.INVALID_SIZE],
+        )
 
     return InputValidationResult(
         is_valid=True,
-        error_codes=[ValidationErrorCode.INVALID_SIZE],
+        error_codes=[],
     )
