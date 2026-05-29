@@ -122,10 +122,10 @@ MagicSquare_021/
   - [x] G-020 `test_empty_grid_returns_invalid_size_error_code`
   - [x] G-021 `test_jagged_row_lengths_returns_invalid_size_error_code`
   - [x] G-022 `test_valid_4x4_grid_does_not_emit_invalid_size`
-  - [x] G-023 `test_invalid_size_skips_blank_count_check`
+  - [x] G-023 `test_invalid_size_skips_blank_count_check` ⚠️ [C-3](#개선-todo-코드-리뷰--qa) — vacuous test, 재작성 필요
   - [x] G-024 `test_pydantic_schema_rejects_non_4x4_flat_input`
 
-- [ ] **RED-2b** `tests/boundary/test_ac_fr_01_01_input_validation.py` (예정) → `src/boundary/` · Dual-Track envelope
+- [ ] **RED-2b** `tests/boundary/test_ac_fr_01_01_input_validation.py` (예정) → ~~`src/boundary/`~~ `magic_square.boundary` · Dual-Track envelope ([C-2](#개선-todo-코드-리뷰--qa))
   - [ ] G-024a `TestNormalFailureReturn::test_none_grid_returns_failure_with_invalid_size_code`
   - [ ] G-024b~ AC-FR-01-02~05 (U-IN/U-OUT/U-FLOW, RED 미작성)
 
@@ -164,7 +164,7 @@ MagicSquare_021/
 
 - [x] **RED-7** `tests/control/test_solver.py` (5건) → S-05
   - [x] G-050 TC-B-18 `test_solve_returns_small_first_when_small_first_succeeds`
-  - [x] G-051 TC-B-19 `test_solve_returns_large_first_when_small_first_fails`
+  - [x] G-051 TC-B-19 `test_solve_returns_large_first_when_small_first_fails` ⚠️ [C-4](#개선-todo-코드-리뷰--qa) — fallback 미검증, GM-TC-02로 보강 필요
   - [x] G-052 TC-B-20 `test_solve_returns_none_when_both_combinations_fail`
   - [x] G-053 TC-B-21 `test_solve_returns_4x4_grid_without_blanks`
   - [x] G-054 TC-B-22 `test_solve_result_passes_validate`
@@ -189,7 +189,7 @@ MagicSquare_021/
 - [ ] G-023 크기 위반 시 `_check_blank_count` 미호출
 - [ ] G-024 `GridInputSchema` 16칸 Pydantic 검증
 
-#### 1b단계 — Dual-Track Boundary (`src/boundary/` · 예정)
+#### 1b단계 — Dual-Track Boundary (~~`src/boundary/`~~ · [C-2](#개선-todo-코드-리뷰--qa) legacy 제거 후 진행)
 
 - [ ] G-024a `grid=None` → `FailureResponse` (`type=ERROR`, `code=INVALID_SIZE`, `message="Grid must be 4x4."`)
 - [ ] G-024b~ AC-FR-01-02~05
@@ -223,14 +223,144 @@ MagicSquare_021/
 
 ### 커버리지 목표
 
-- [ ] Domain Logic: 95%+ (`pip install pytest-cov`)
+- [ ] **전체 TOTAL: 80%+** (`pyproject.toml` `--cov-fail-under=80`) — **현재 67% (미달)**
+- [ ] Domain Logic: 95%+
 - [ ] Boundary Layer: 85%+
-- [ ] 전체 TOTAL: 90%+
+
+> 미커버 주요 원인: `boundary/qt/main_window.py` (0%), `boundary/qt/__main__.py` (0%), `src/boundary/` legacy (0%).  
+> 상세 조치는 아래 [개선 TODO](#개선-todo-코드-리뷰--qa) 참조.
 
 ### 결함 목록 연결
 
 - [x] [`defect_list.md`](defect_list.md) 생성 및 발견 결함 기록 (DL-MSQ-001, 23건)
+- [ ] `defect_list.md`·RED 단계 주석을 GREEN 현재 상태에 맞게 갱신
 - [ ] 모든 결함 수정 후 회귀 테스트 통과 확인 (G-055)
+
+---
+
+## 개선 TODO (코드 리뷰 · QA)
+
+> **기준일:** 2026-05-29 · Code Reviewer 전체 리뷰 + QA 코드 스멜 분석 통합.  
+> **현재:** 98 tests PASS · coverage **67%** (CI 기준 80% 미달 · pytest exit code 1)
+
+### 요약
+
+| 심각도 | 건수 | 대표 영역 |
+|---|---|---|
+| **Critical** | 5 | 커버리지 미달, dead code, 허위 회귀 테스트, 오류 계약 불일치 |
+| **Major** | 13 | ECB 경계, 중복 API/로직, 테스트 구조·품질, Qt 미테스트 |
+| **Minor** | 10 | 네이밍, AAA 불일치, 문서 stale, 매직 넘버, fixture 중복 |
+
+### Critical (즉시 대응)
+
+- [ ] **C-1 커버리지 80% 복구** — `pyproject.toml` `--cov-fail-under=80` 기준 위반
+  - [ ] `boundary/qt/main_window.py` (105줄, 0%) — `pytest-qt` smoke test 추가
+  - [ ] `boundary/qt/__main__.py` (12줄, 0%) — entry point smoke test 또는 omit
+  - [ ] `src/boundary/` legacy (0%) — 제거 후 omit 불필요하게 만들기
+  - [ ] 대안: `[tool.coverage.run] omit`으로 GUI·legacy 명시적 제외 후 비즈니스 로직 80%+ 유지
+
+- [ ] **C-2 Legacy `src/boundary/` dead code 제거/통합**
+  - `src/magic_square/boundary/`와 병존하는 구버전 스텁 (`NotImplementedError` 잔존)
+  - import 경로 이중화·0% 커버리지 노이즈 제거
+  - RED-2b(`test_ac_fr_01_01_input_validation.py`)의 `src/boundary/` 참조 정리
+
+- [ ] **C-3 `_check_blank_count` dead code + 허위 회귀 테스트 (G-023)**
+  - `_check_blank_count()`는 정의만 있고 `validate_input`/`InputValidator`는 `_collect_input_errors` 사용
+  - `test_invalid_size_skips_blank_count_check`는 mock 후 `assert_not_called()`가 **항상 참** — “크기 위반 시 blank_count 스킵” 미검증
+  - 제거하거나 실제 검증 흐름에 연결, `_collect_input_errors` 조기 반환 테스트로 대체
+
+- [ ] **C-4 Solver fallback 테스트가 fallback을 검증하지 않음 (G-051)**
+  - `test_solve_returns_large_first_when_small_first_fails` — fixture `grid_two_blanks`는 small-first로 이미 성공
+  - GM-TC-02 격자(`SCENARIO_GRIDS["GM-TC-02"]`)로 교체, `assert_small_first_fails()` 패턴 적용
+
+- [ ] **C-5 `UIBoundary` 오류 계약 불일치**
+  - unsolvable 시 `FailureEnvelope` 대신 `UnsolvableDomainError` 예외 전파
+  - `MainWindow`·`golden_master/support.py`가 각각 catch — 레이어마다 계약 상이
+  - `UIBoundary.solve()`에서 `UnsolvableDomainError` → `FailureEnvelope(code="UNSOLVABLE")` 통일
+
+### Major (구조·품질)
+
+- [ ] **M-1 Entity에 Boundary 전용 타입 혼재** — `entity/types.py`의 `ValidationErrorCode`, `InputValidationResult` → `magic_square.boundary.types` 등으로 이동
+
+- [ ] **M-2 입력 검증 이중 API + 로직 중복** — `validate_input` vs `InputValidator.validate`, 오류 코드 `"blank_count"` vs `"E002"` drift 위험 → `_collect_input_errors` 단일 진입점 통합
+
+- [ ] **M-3 Solver `solution()` / `solve()` assignment loop 중복** — `control/solver.py` 공통 로직 추출
+
+- [ ] **M-4 함수 alias 중복** — `find_blanks`/`find_blank_coords`, `find_missing_numbers`/`find_not_exist_nums` → Track B alias만 유지, 내부 구현 하나로 정리
+
+- [ ] **M-5 테스트 디렉토리 배치** — `tests/entity/test_d_*.py` 등 Control 레이어 테스트 → `tests/control/` 이동
+
+- [ ] **M-6 INV-7 `_check_completeness` 미구현** — `control/validator.py` 암묵적 통합만 존재, 명시적 테스트·함수 추가 검토
+
+- [ ] **M-7 약한 assertion 강화** — `test_validator.py:138` `len(result.failed_conditions) >= 1` → 정확한 실패 조건 개수·이름 검증
+
+- [ ] **M-8 AAA 패턴 통일** — Boundary Track A 테스트 4개 파일 `# Given`/`# When` → `# Arrange`/`# Act`/`# Assert`
+
+- [ ] **M-9 Qt GUI 전체 미테스트** — `boundary/qt/` adapter는 테스트 있으나 `main_window.py` 105줄 0%
+
+- [ ] **M-10 `parse_cell_text` 함수 본문 매직 넘버** — `adapter.py:43` `value > 16` → `MAX_CELL_VALUE`/`REQUIRED_NUMBERS` 기반 모듈 상수
+
+- [ ] **M-11 테스트 갭 보완** — 주 대각선 실패 경로, 입력 성공 경로, solver edge case
+
+- [ ] **M-12 Stale RED 단계 주석 갱신** — `test_types.py`, `test_us11_regression_protection.py`, `defect_list.md` (“Entity 미구현” 등 GREEN 상태와 모순)
+
+- [ ] **M-13 Git staging 정리** — staged `tests/regression/test_golden_master.py` vs 디스크 `test_golden_master_magic_square.py` 불일치
+
+### Minor
+
+- [ ] Golden Master `support.py`가 private API `_fill_grid`에 의존 — public API 또는 테스트 전용 헬퍼로 정리
+- [ ] `blank_coords_row_major()`와 `find_blank_coords()` 로직 중복
+- [ ] `BASE_MAGIC_SQUARE` vs `valid_magic_square` fixture 데이터 중복
+- [ ] U-OUT 테스트 과도한 mock (envelope shape만 확인)
+- [ ] `test_d_loc_01` 중복 assertion (`len(coords) == 2`)
+- [ ] `scripts/generate_golden_master.py:41` `print()` → `logging` 또는 `sys.stdout.write`
+- [ ] private checker 함수 직접 import (white-box coupling) — public API 경유 검토
+- [ ] `InputValidator` 클래스 성공 경로 단독 테스트 부재
+- [ ] `test_missing_number_finder.py:59-60` `7 in missing or 14 in missing` → 누락 집합 `{7, 11, 14}` 정확 검증
+- [ ] `apply_solution_payload` 입력 검증 없음 (`qt/adapter.py`) — payload 길이·좌표 범위 early return
+- [ ] Public API docstring 보강 — `validate()`, `solve()`/`solution()`, `InputValidator.validate()`, `UIBoundary.solve()`
+
+### magicsquare-forbidden.mdc 위반 현황
+
+| 규칙 | 위반 위치 | TODO |
+|---|---|---|
+| 함수 내 매직 넘버 `16` | `adapter.py:43`, `adapter.py:105` `range(0, 3)` | M-10 |
+| `print()` | `scripts/generate_golden_master.py:41` | Minor |
+| 테스트 약화 (`>= 1`, `or` 조건) | `test_validator.py:138`, `test_missing_number_finder.py:59-60` | M-7, Minor |
+
+**위반 없음:** 타입힌트 누락, bare `except`, ECB 역방향 import
+
+### ECB / TDD 준수 현황
+
+| 항목 | 판정 | 비고 |
+|---|---|---|
+| ECB 의존 방향 | **PASS** | Entity→Control, Control→Boundary 역방향 import 없음 |
+| 레이어별 역할 | **PARTIAL** | Entity에 Boundary 타입 혼재 (M-1) |
+| TDD RED→GREEN | **PASS** | 7 invariant + Solver + Boundary use case 테스트 존재 |
+| AAA 패턴 | **PARTIAL** | Control/Entity 준수, Track A Boundary는 Given/When (M-8) |
+| 테스트 약화 금지 | **PARTIAL** | `>= 1`, `or` 조건 소수 존재 (M-7) |
+| 커버리지 80% | **FAIL** | 67% — C-1 |
+
+### 우선순위 액션 (Top 9)
+
+1. **C-1** 커버리지 80% 복구 — Qt smoke test 또는 omit, legacy 제거
+2. **C-2** `src/boundary/` legacy 정리 — `magic_square.boundary` 단일 패키지
+3. **C-3** `_check_blank_count` dead code·G-023 vacuous test 정리
+4. **C-4** Solver fallback 테스트 (G-051) GM-TC-02 + `assert_small_first_fails()` 보강
+5. **C-5** `UIBoundary` `UnsolvableDomainError` → `FailureEnvelope("UNSOLVABLE")` 통일
+6. **M-2** 입력 검증 단일 API 통합 (`validate_input` ↔ `InputValidator`)
+7. **M-1** Entity/Boundary 타입 분리
+8. **M-5** `tests/entity/test_d_*.py` → `tests/control/` 이동
+9. **M-8 · M-7 · M-12** AAA 주석 통일, assertion 강화, stale 문서 갱신
+
+### 긍정적 관찰
+
+- 98개 테스트 전부 GREEN, Control validator 100% 커버리지
+- `src/magic_square/` 핵심 로직에 type hint 일관 적용
+- ECB 역방향 import 없음
+- `conftest.py` fixture 체계 잘 구축됨
+- Golden Master 회귀 테스트는 end-to-end Solver 보호에 유효
+- Qt adapter는 파싱·메시지를 Boundary에 격리, `MainWindow`는 `UIBoundary`만 호출
 
 ---
 
