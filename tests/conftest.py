@@ -7,7 +7,7 @@ scope 규칙:
 """
 import pytest
 
-from magic_square.entity.types import Grid
+from magic_square.entity.types import ConditionResult, Grid, ValidationResult
 
 
 @pytest.fixture
@@ -237,3 +237,31 @@ def grid_unsolvable_two_blanks() -> Grid:
         [ 9, 10, 11, 12],
         [13, 14,  0, 16],
     ]
+
+
+@pytest.fixture
+def passed_condition() -> ConditionResult:
+    """통과 상태의 ConditionResult."""
+    return ConditionResult(name="격자 크기", passed=True)
+
+
+@pytest.fixture
+def failed_condition() -> ConditionResult:
+    """실패 상태의 ConditionResult."""
+    return ConditionResult(
+        name="행 합",
+        passed=False,
+        reason="1번 행의 합이 34가 아님 (실제: 33)",
+    )
+
+
+@pytest.fixture
+def valid_validation_result() -> ValidationResult:
+    """모든 조건 통과 상태의 ValidationResult."""
+    return ValidationResult(is_valid=True)
+
+
+@pytest.fixture
+def invalid_validation_result(failed_condition: ConditionResult) -> ValidationResult:
+    """하나 이상의 조건 실패 상태의 ValidationResult."""
+    return ValidationResult(is_valid=False, failed_conditions=[failed_condition])
