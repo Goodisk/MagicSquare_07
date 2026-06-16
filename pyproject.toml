@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=7.0",
+    "pytest-html>=4.0",
+]
+gui = [
+    "PyQt6>=6.6",
+]
+
+[project.scripts]
+magic-square-gui = "magic_square.boundary.qt.__main__:main"
+
+[project]
+name = "magic-square"
+version = "0.1.0"
+requires-python = ">=3.13"
+dependencies = [
+    "pydantic>=2.10",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+addopts = "--cov=src --cov-report=term-missing --cov-fail-under=80"
+markers = [
+    "golden_master: Golden Master / Approval regression tests (GM-TC-*)",
+]
+
+[tool.black]
+line-length = 88
+target-version = ["py313"]

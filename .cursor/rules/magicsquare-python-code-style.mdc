@@ -1,0 +1,99 @@
+---
+description: Python 3.13 코드 스타일 — type hints 필수, Google docstring, PEP8 네이밍, Black 포매터
+globs: "**/*.py"
+alwaysApply: false
+---
+
+# Python 코드 스타일 규칙
+
+## 버전 및 문법
+
+Python 3.13을 사용한다. 최신 문법을 적극 활용한다.
+
+```python
+# ✅ 3.10+ union 타입 표기
+def validate(grid: list[list[int]] | None) -> ValidationResult: ...
+
+# ✅ 3.10+ match/case
+match result.failed:
+    case []:
+        return True
+    case failures:
+        return False
+```
+
+## Type Hints — 모든 함수에 필수
+
+모든 함수에 인자 타입과 반환 타입을 명시한다. 예외 없음.
+
+```python
+# ❌ type hints 없음
+def check_rows(grid):
+    ...
+
+# ✅ 완전한 type hints
+def check_rows(grid: list[list[int]]) -> list[str]:
+    ...
+```
+
+## Docstring — Google 스타일
+
+모든 public 함수, 메서드, 클래스에 Google 스타일 docstring을 작성한다.
+Private 함수(`_` 접두사)는 생략 가능.
+
+```python
+def validate(grid: list[list[int]]) -> ValidationResult:
+    """격자가 4x4 마방진의 모든 불변 조건을 만족하는지 판정한다.
+
+    Args:
+        grid: 검증할 4x4 정수 격자.
+
+    Returns:
+        ValidationResult: 판정 결과와 실패한 조건 목록.
+
+    Raises:
+        TypeError: grid가 리스트가 아닌 경우.
+    """
+```
+
+## 라인 길이
+
+최대 88자 (Black 포매터 기준).
+
+```toml
+# pyproject.toml
+[tool.black]
+line-length = 88
+target-version = ["py313"]
+```
+
+## PEP8 네이밍
+
+| 대상 | 규칙 | 예시 |
+| ------ | ------ | ------ |
+| 함수/변수 | `snake_case` | `check_row_sums` |
+| 클래스 | `PascalCase` | `ValidationResult` |
+| 상수 | `UPPER_SNAKE_CASE` | `TARGET_SUM: Final[int] = 34` |
+| 내부 함수 | `_` 접두사 | `_check_grid_size` |
+
+## 상수 선언
+
+함수 본문에 매직 넘버를 하드코딩하지 않는다. 모듈 레벨 `Final` 상수로 선언한다.
+
+```python
+# ❌ 함수 내 하드코딩
+def _check_row_sums(grid: Grid) -> str | None:
+    for row in grid:
+        if sum(row) != 34:   # 의미 불명확
+            ...
+
+# ✅ 모듈 레벨 Final 상수
+TARGET_SUM: Final[int] = 34
+GRID_SIZE: Final[int] = 4
+EXPECTED_NUMBERS: Final[frozenset[int]] = frozenset(range(1, 17))
+
+def _check_row_sums(grid: Grid) -> str | None:
+    for row in grid:
+        if sum(row) != TARGET_SUM:
+            ...
+```
